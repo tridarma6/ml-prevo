@@ -15,7 +15,7 @@ lightgbm==4.1.0
 
 # Deep Learning (CPU versions for compatibility)
 tensorflow-cpu==2.15.0
-torch==2.1.2+cpu
+torch==2.1.2
 torchvision==0.16.2+cpu
 
 # Data visualization
