@@ -196,7 +196,7 @@ def search(failure_type: Optional[str] = None, machine_type: Optional[str] = Non
 
     if machine_type:
         result = [
-            m for m in result if m["machine_type"].lower() == machine_type.lower()
+            m for m in result if m["Type"].lower() == machine_type.lower()
         ]
 
     return result
@@ -302,7 +302,7 @@ def get_stats_by_type():
     # Inisialisasi pengelompokan
     for m in MACHINES:
         m_type = m.get(
-            "machine_type", "Unknown"
+            "Type", "Unknown"
         )  # Memastikan key JSON sesuai (misal: "Type" atau "machine_type")
         if m_type not in stats:
             stats[m_type] = {"total": 0, "failures": 0, "avg_risk": 0.0}

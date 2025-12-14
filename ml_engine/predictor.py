@@ -40,22 +40,22 @@ def _ensure_tabnet_zip(model_dir):
     zip_path = os.path.join(model_dir, "tabnet_anomaly_model.zip")
     folder_path = os.path.join(model_dir, "tabnet_anomaly_model")
 
-    # 1. Jika zip sudah ada, langsung return path-nya
+    # Jika zip sudah ada, langsung return path-nya
     if os.path.isfile(zip_path):
         return zip_path
 
-    # 2. Jika zip tidak ada, cek apakah foldernya ada
+    # Jika zip tidak ada, cek apakah foldernya ada
     if not os.path.isdir(folder_path):
         raise FileNotFoundError(f"TabNet model zip/folder not found inside {model_dir}")
 
     mp = os.path.join(folder_path, "model_params.json")
     net = os.path.join(folder_path, "network.pt")
     
-    # 3. Pastikan isi foldernya lengkap
+    # Pastikan isi foldernya lengkap
     if not (os.path.isfile(mp) and os.path.isfile(net)):
         raise FileNotFoundError("TabNet folder missing model_params.json or network.pt")
 
-    # 4. Buat zip sementara secara otomatis
+    # Buat zip sementara secara otomatis
     try:
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             zf.write(mp, arcname="model_params.json")
@@ -102,8 +102,8 @@ def fe(df):
             df[c] = 0.0
         df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0.0)
 
-    # PENTING: Menggunakan nama kolom 'Type_enc' (sesuai kode teman Anda)
-    # Kode lama menggunakan 'Type_Encoded', ini harus konsisten dengan training.
+    # PENTING: Menggunakan nama kolom 'Type_enc' 
+    # Kode lama menggunakan 'Type_Encoded',
     if "Product ID" in df.columns:
         df["Product_ID_enc"] = pd.factorize(df["Product ID"].astype(str))[0]
     else:
@@ -174,7 +174,7 @@ def predict_failure_type(df, artifacts):
         "Rotational speed [rpm]",
         "Torque [Nm]",
         "Tool wear [min]",
-        "Type_enc",  # Perhatikan ini Type_enc
+        "Type_enc", 
         "Temp_Diff",
         "Torque_Speed_Product",
         "Energy",
@@ -193,7 +193,7 @@ def predict_failure_type(df, artifacts):
 
     X = scaler.transform(df[feature_cols].values)
 
-    # Loop models (Logic teman Anda lebih rapi di sini)
+    # Loop models
     proba = []
     for i in range(len(le.classes_)):
         model = models.get(i)
@@ -201,7 +201,7 @@ def predict_failure_type(df, artifacts):
 
     proba = np.column_stack(proba)
 
-    # Boosting Rules (Heuristic Adjustment)
+    # Boostin
     for i, cls in enumerate(le.classes_):
         if cls == "Random Failures":
             proba[:, i] *= 50
@@ -230,23 +230,23 @@ def run_and_save_api(input_csv, output_json, model_dir):
     Fungsi ini dipanggil oleh FastAPI (main.py).
     Menggabungkan semua langkah: Load -> FE -> Predict -> Save.
     """
-    # 1. Load Artifacts
+    # Load Artifacts
     # Kita passing model_dir dari parameter function, bukan hardcode
     artifacts = load_artifacts(model_dir)
 
-    # 2. Read CSV
+    # Read CSV
     df = pd.read_csv(input_csv)
 
-    # 3. Feature Engineering
+    # Feature Engineering
     df = fe(df)
 
-    # 4. Predict Anomaly
+    #Predict Anomaly
     df = predict_anomaly(df, artifacts)
 
-    # 5. Predict Failure Type
+    #  Predict Failure Type
     df = predict_failure_type(df, artifacts)
 
-    # 6. Map Recommendation
+    #  Map Recommendation
     recommendation_map = {
         "No Failure": "Tidak perlu tindakan. Jadwalkan pemeliharaan rutin sesuai SOP.",
         "Heat Dissipation Failure": "Periksa sistem pendingin/ventilasi.",
@@ -261,7 +261,7 @@ def run_and_save_api(input_csv, output_json, model_dir):
         lambda x: recommendation_map.get(x, "Lakukan inspeksi manual.")
     )
 
-    # 7. Siapkan JSON (Compact Format)
+    #  Siapkan JSON (Compact Format)
     result_cols = ["anomaly_probability", "is_anomaly", "predicted_failure_type", "recommendation"]
     
     # Gabungkan kolom input asli dengan hasil prediksi
@@ -270,7 +270,7 @@ def run_and_save_api(input_csv, output_json, model_dir):
     compact_df = df[cols_to_keep].copy()
     records = compact_df.to_dict(orient="records")
 
-    # 8. Save JSON
+    # Save JSON
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
 

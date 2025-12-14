@@ -47983,7 +47983,7 @@
     "predicted_failure_type": "Random Failures",
     "recommendation": "Lakukan inspeksi menyeluruh dan tingkatkan monitoring."
   },
-  {   
+  {
     "UDI": 959,
     "Product ID": "L48138",
     "Type": "L",
@@ -47999,4 +47999,4 @@
     "predicted_failure_type": "Tool Wear Failure",
     "recommendation": "Ganti atau asah tool."
   }
-]        
+]
