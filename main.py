@@ -57,7 +57,7 @@ def load_data_to_memory():
 # Load data saat aplikasi pertama kali jalan
 @app.on_event("startup")
 async def startup_event():
-    # Pastikan folder data ada
+    # Memastikan folder data ada
     os.makedirs(DATA_DIR, exist_ok=True)
     load_data_to_memory()
 
@@ -147,14 +147,14 @@ def highest_risk():
 # GET: Top N mesin paling berisiko optional dengan parameter failure type
 # -------------------------
 @app.get("/machines/top/{n}")
-def get_top_n(n: int = 5, failure_type: Optional[str] = None):
+def get_top_n(n: int = 5, predicted_failure_type: Optional[str] = None):
     data = MACHINES
 
-    if failure_type:
+    if predicted_failure_type:
         data = [
             m
             for m in data
-            if failure_type.lower() == m.get("predicted_failure_type", "").lower()
+            if predicted_failure_type.lower() == m.get("predicted_failure_type", "").lower()
         ]
 
     sorted_data = sorted(data, key=lambda x: x["anomaly_probability"], reverse=True)
@@ -166,14 +166,14 @@ def get_top_n(n: int = 5, failure_type: Optional[str] = None):
 # GET: Top N mesin resiko paling rendah (optional dengan parameter failure type)
 # -------------------------
 @app.get("/machines/bottom/{n}")
-def get_bottom_n(n: int = 5, failure_type: Optional[str] = None):
+def get_bottom_n(n: int = 5, predicted_failure_type: Optional[str] = None):
     data = MACHINES
 
-    if failure_type:
+    if predicted_failure_type:
         data = [
             m
             for m in data
-            if failure_type.lower() == m.get("predicted_failure_type", "").lower()
+            if predicted_failure_type.lower() == m.get("predicted_failure_type", "").lower()
         ]
 
     sorted_data = sorted(data, key=lambda x: x["anomaly_probability"])
@@ -184,14 +184,14 @@ def get_bottom_n(n: int = 5, failure_type: Optional[str] = None):
 # GET: Cari berdasarkan failure type / machine type
 # -------------------------
 @app.get("/machines/search")
-def search(failure_type: Optional[str] = None, machine_type: Optional[str] = None):
+def search(predicted_failure_type: Optional[str] = None, machine_type: Optional[str] = None):
     result = MACHINES
 
-    if failure_type:
+    if predicted_failure_type:
         result = [
             m
             for m in result
-            if failure_type.lower() in m["predicted_failure_type"].lower()
+            if predicted_failure_type.lower() in m["predicted_failure_type"].lower()
         ]
 
     if machine_type:
@@ -199,27 +199,27 @@ def search(failure_type: Optional[str] = None, machine_type: Optional[str] = Non
             m for m in result if m["Type"].lower() == machine_type.lower()
         ]
 
-    return result
+    return result   
 
 
 # -------------------------
 # GET: Hitung jumlah mesin berdasarkan kriteria
 # -------------------------
 @app.get("/machines/search/count")
-def search_count(failure_type: Optional[str] = None):
+def search_count(predicted_failure_type: Optional[str] = None):
     result = MACHINES
 
-    if failure_type:
+    if predicted_failure_type:
         result = [
             m
             for m in result
-            if failure_type.lower() in m.get("predicted_failure_type", "").lower()
+            if predicted_failure_type.lower() in m.get("predicted_failure_type", "").lower()
         ]
 
     return {
         "status": "success",
         "count": len(result),
-        "filter_applied": {"failure_type": failure_type},
+        "filter_applied": {"predicted_failure_type": predicted_failure_type},
     }
 
 
@@ -227,16 +227,16 @@ def search_count(failure_type: Optional[str] = None):
 # GET: Rekomendasi Maintenance (Filter + Sort Risk + Limit)
 # -------------------------
 @app.get("/machines/maintenance-candidates")
-def get_maintenance_candidates(failure_type: Optional[str] = None, limit: int = 5):
-    # Mulai dengan semua data
+def get_maintenance_candidates(predicted_failure_type: Optional[str] = None, limit: int = 5):
+    # assign semua data ke candidates yang akan digenerate ticketnya
     candidates = MACHINES
 
-    # Filter berdasarkan Failure Type (jika diminta user)
-    if failure_type:
+    # Filter berdasarkan Failure Type (jika user minta)
+    if predicted_failure_type:
         candidates = [
             m
             for m in candidates
-            if failure_type.lower() in m.get("predicted_failure_type", "").lower()
+            if predicted_failure_type.lower() in m.get("predicted_failure_type", "").lower()
         ]
 
     # Filter: Hanya yang probability > 0 (biar ga bikin tiket buat mesin sehat)
@@ -247,7 +247,7 @@ def get_maintenance_candidates(failure_type: Optional[str] = None, limit: int = 
         candidates, key=lambda x: x.get("anomaly_probability", 0), reverse=True
     )
 
-    # Limit: Ambil N teratas (Default 5 jika user tidak minta jumlah)
+    # Limit: Ambil N teratas (Default 5 jika user ga minta jumlah)
     final_result = sorted_candidates[:limit]
 
     return {"status": "success", "count": len(final_result), "candidates": final_result}
@@ -329,16 +329,16 @@ def get_stats_by_type():
 # GET: Rata-rata Sensor berdasarkan Failure Type
 # -------------------------
 @app.get("/stats/sensor-analysis")
-def get_sensor_analysis(failure_type: str):
+def get_sensor_analysis(predicted_failure_type: str):
     # Filter mesin berdasarkan failure type target
     target_machines = [
         m
         for m in MACHINES
-        if failure_type.lower() in m.get("predicted_failure_type", "").lower()
+        if predicted_failure_type.lower() in m.get("predicted_failure_type", "").lower()
     ]
 
     if not target_machines:
-        return {"message": f"No machines found with failure type: {failure_type}"}
+        return {"message": f"No machines found with failure type: {predicted_failure_type}"}
 
     count = len(target_machines)
 
@@ -351,7 +351,7 @@ def get_sensor_analysis(failure_type: str):
     avg_rpm = sum(m.get("Rotational speed [rpm]", 0) for m in target_machines) / count
 
     return {
-        "failure_type": failure_type,
+        "failure_type": predicted_failure_type,
         "analyzed_machines": count,
         "averages": {
             "air_temperature": round(avg_air_temp, 2),
